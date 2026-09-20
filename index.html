@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>証券口座えらび診断</title>
+<meta name="description" content="7つの質問に答えるだけで、あなたに合うネット証券がわかる診断ツール。SBI・楽天・マネックス・松井・三菱UFJ eスマート・moomoo・PayPay・大和コネクトの8社を比較。">
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#1c2430; --muted:#5f6b7a; --line:#e3e8ee;
+    --accent:#0f5f8f; --accent-ink:#ffffff; --accent-soft:#e6f1f8;
+    --gold:#c78d1c; --ok:#2e7d5b; --warn:#b4541c;
+    --radius:14px; --shadow:0 2px 10px rgba(20,30,50,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;line-height:1.7}
+  body{padding:0 16px 64px}
+  .wrap{max-width:720px;margin:0 auto}
+  header{padding:36px 0 20px;text-align:center}
+  header h1{font-size:1.6rem;margin:0 0 6px;letter-spacing:.02em}
+  header p{margin:0;color:var(--muted);font-size:.95rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px}
+  .progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+  .progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  .qnum{font-size:.8rem;color:var(--accent);font-weight:700;letter-spacing:.08em}
+  .qtext{font-size:1.15rem;font-weight:700;margin:4px 0 16px}
+  .opts{display:grid;gap:10px}
+  .opt{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:14px 16px;font:inherit;color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+  .opt:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .opt small{display:block;color:var(--muted);font-size:.85rem;margin-top:2px}
+  .nav{display:flex;justify-content:space-between;margin-top:18px}
+  .btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:10px 16px;cursor:pointer}
+  .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .hidden{display:none}
+  /* results */
+  .notice{border-left:4px solid var(--warn);background:#fff7f0;padding:12px 14px;border-radius:8px;margin-bottom:18px;font-size:.95rem}
+  .rank{display:grid;gap:14px}
+  .rk{border:1px solid var(--line);border-radius:12px;padding:18px;position:relative;background:#fff}
+  .rk.top{border-color:var(--gold);box-shadow:0 0 0 3px #f6ecd6}
+  .rk .medal{position:absolute;top:-12px;left:16px;background:var(--gold);color:#fff;font-weight:700;font-size:.8rem;padding:2px 10px;border-radius:99px}
+  .rk.top .medal{background:var(--gold)} .rk:nth-child(2) .medal{background:#8a94a3} .rk:nth-child(3) .medal{background:#a9744f}
+  .rk h3{margin:6px 0 2px;font-size:1.2rem}
+  .rk .fit{color:var(--muted);font-size:.9rem;margin-bottom:8px}
+  .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 10px}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .why{margin:0;padding-left:1.2em;font-size:.93rem}
+  .why li{margin:2px 0}
+  .why li::marker{color:var(--ok)}
+  .caution{color:var(--warn);font-size:.88rem;margin-top:6px}
+  details{margin-top:22px}
+  summary{cursor:pointer;font-weight:700;color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:.82rem;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+  th{background:var(--accent-soft);white-space:nowrap}
+  .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  footer{margin-top:28px;font-size:.8rem;color:var(--muted)}
+  footer p{margin:6px 0}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  @media print{ body{background:#fff} .actions,.btn{display:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>証券口座えらび診断</h1>
+    <p>7つの質問に答えるだけ。あなたに合うネット証券がわかります。</p>
+  </header>
+
+  <!-- 質問画面 -->
+  <section id="quiz" class="card">
+    <div class="progress"><i id="bar"></i></div>
+    <div class="qnum" id="qnum"></div>
+    <div class="qtext" id="qtext"></div>
+    <div class="opts" id="opts"></div>
+    <div class="nav">
+      <button class="btn" id="back">← 戻る</button>
+      <span></span>
+    </div>
+  </section>
+
+  <!-- 結果画面 -->
+  <section id="result" class="card hidden">
+    <div id="advice"></div>
+    <h2 style="margin:0 0 14px;font-size:1.25rem">あなたに合う証券会社 TOP3</h2>
+    <div class="rank" id="rank"></div>
+    <details>
+      <summary>8社の比較表を見る</summary>
+      <div class="tblwrap" id="table"></div>
+    </details>
+    <div class="actions">
+      <button class="btn primary" id="retry">もう一度診断する</button>
+      <button class="btn" onclick="window.print()">結果を印刷 / PDF保存</button>
+    </div>
+    <footer>
+      <p>※ 本ツールは一般的な情報提供を目的としたものであり、特定の金融商品の勧誘・投資助言ではありません。口座開設や投資の判断はご自身の責任で行ってください。</p>
+      <p>※ 手数料・ポイント還元率・取扱商品などは <span id="asof"></span> 時点の公開情報をもとにしています。条件は変更されることがあるため、最新の内容は必ず各社公式サイトでご確認ください。</p>
+    </footer>
+  </section>
+</div>
+
+<script>
+/* =========================================================
+   データ（更新するときはここだけ直せばOK）
+   ========================================================= */
+const AS_OF = "2026年9月";
+
+const BROKERS = [
+  { id:"sbi", name:"SBI証券", tag:"総合力No.1。迷ったらここ",
+    jpFee:"現物0円／NISA 0円", usFee:"0.495%（上限22ドル）／NISA 0円", fx:"外貨決済なら0銭（円貨は25銭）", usCount:"約5,000銘柄", funds:"2,684本",
+    card:"三井住友カードなど 基本0.5%（最大6.0%）", holdPt:"あり（年率最大0.25%）", points:"Vポイント・Ponta・dポイント・JALマイル・PayPay",
+    odd:"可（S株）買付・売却0円", ipo:"2025年 62社（業界最多）", app:"商品別に複数アプリ", support:"電話（土日も）・AIチャット・画面共有",
+    s:{ fund:3, jp:3, us:2, undecided:3, eco:["v","ponta","d","paypay"], micro:2, small:3, mid:3, large:3, odd:3, ipo:3, fee:3, app:2, phone:3, tool:2 } },
+  { id:"rakuten", name:"楽天証券", tag:"楽天経済圏なら迷わず",
+    jpFee:"現物0円／NISA 0円", usFee:"0.495%（上限22ドル）／NISA 0円", fx:"25銭", usCount:"約4,500銘柄", funds:"2,626本",
+    card:"楽天カード 基本0.5〜1.0%（最大2.0%）", holdPt:"あり（残高到達時など）", points:"楽天ポイント",
+    odd:"可（かぶミニ）売買0円", ipo:"2025年 43社", app:"「iSPEED」直感的で見やすい・日経テレコン無料", support:"AIチャット・画面共有・動画セミナー",
+    s:{ fund:3, jp:3, us:2, undecided:3, eco:["rakuten"], micro:2, small:3, mid:3, large:3, odd:3, ipo:2, fee:3, app:3, phone:2, tool:2 } },
+  { id:"monex", name:"マネックス証券", tag:"dポイント派・米国株・IPO平等抽選",
+    jpFee:"現物55円〜／NISA 0円", usFee:"0.495%（上限22ドル）／NISA 0円", fx:"買付0銭／売却25銭", usCount:"5,000銘柄以上", funds:"1,895本",
+    card:"dカード・マネックスカード 基本1.1%（最大3.1%）", holdPt:"あり（年率最大0.26%）", points:"dポイント・マネックスポイント",
+    odd:"可（ワン株）買付0円・売却0.55%（NISAは0円）", ipo:"2025年 41社（1人1票の平等抽選）", app:"「銘柄スカウター」など分析ツールが強い", support:"電話・チャット・資産設計ツール",
+    s:{ fund:3, jp:2, us:3, undecided:2, eco:["d"], micro:1, small:2, mid:3, large:3, odd:2, ipo:3, fee:2, app:2, phone:2, tool:3 } },
+  { id:"matsui", name:"松井証券", tag:"電話で相談したい人・投信長期保有",
+    jpFee:"1日50万円まで0円（25歳以下は0円）／NISA 0円", usFee:"0.495%（上限22ドル）／NISA 0円", fx:"0銭", usCount:"約5,000銘柄", funds:"1,962本",
+    card:"JCBカード 基本0.5%（最大1.0%）", holdPt:"あり（全銘柄・年率最大1.0%＝業界最高水準）", points:"松井証券ポイント（PayPay・dポイント等に交換可）",
+    odd:"購入不可（売却のみ）", ipo:"2025年 51社（事前入金不要）", app:"シンプルな日本株・米国株アプリ", support:"「株の取引相談窓口」で銘柄相談も可・電話サポート三つ星",
+    s:{ fund:3, jp:2, us:2, undecided:2, eco:[], micro:0, small:3, mid:2, large:1, odd:0, ipo:3, fee:2, app:2, phone:3, tool:1 } },
+  { id:"mufg", name:"三菱UFJ eスマート証券", tag:"au・Ponta・三菱UFJ銀行ユーザー",
+    jpFee:"現物0円（SOR注文時）／NISA 0円", usFee:"0.495%（上限22ドル）／NISA 0円", fx:"20銭", usCount:"約2,100銘柄（拡充予定）", funds:"1,853本",
+    card:"au PAYカード 0.5%／三菱UFJカード 0.55%（最大7.0%）", holdPt:"あり（年率最大0.40%）", points:"Pontaポイント・グローバルポイント",
+    odd:"可（プチ株）買付・売却0円", ipo:"2025年 19社", app:"逆指値など自動売買機能が豊富", support:"電話サポート三つ星・AIチャット・画面共有",
+    s:{ fund:3, jp:3, us:1, undecided:2, eco:["ponta","au"], micro:2, small:3, mid:3, large:2, odd:3, ipo:1, fee:3, app:2, phone:3, tool:2 } },
+  { id:"moomoo", name:"moomoo証券", tag:"米国株を低コストで・分析ツール重視",
+    jpFee:"現物0円／NISA 0円", usFee:"0.132%（上限22ドル）＝業界最安級／NISA 0円", fx:"無料（スプレッド約3銭）", usCount:"約7,000銘柄・24時間取引", funds:"約460〜700本",
+    card:"非対応", holdPt:"なし", points:"なし",
+    odd:"可（1株投資・micro米国株1ドル〜）手数料0円", ipo:"非対応", app:"TradingView連携・AI分析など高機能", support:"24時間有人チャット・デモ取引",
+    s:{ fund:1, jp:2, us:3, undecided:1, eco:[], micro:3, small:2, mid:3, large:3, odd:3, ipo:0, fee:3, app:2, phone:1, tool:3 } },
+  { id:"paypay", name:"PayPay証券", tag:"100円から。PayPayで完結する超初心者向け",
+    jpFee:"100円〜金額指定で購入（スプレッド方式）", usFee:"スプレッド方式（約0.5〜0.7%）", fx:"—", usCount:"有名銘柄に厳選", funds:"少数",
+    card:"PayPayカード", holdPt:"—", points:"PayPayポイント",
+    odd:"可（100円〜金額指定）", ipo:"取扱あり（少数）", app:"PayPayアプリ内のミニアプリで完結", support:"FAQ・問い合わせフォーム",
+    s:{ fund:1, jp:2, us:1, undecided:2, eco:["paypay"], micro:3, small:1, mid:0, large:0, odd:3, ipo:0, fee:1, app:3, phone:0, tool:0 } },
+  { id:"connect", name:"大和コネクト証券", tag:"セゾン・永久不滅ポイントでスマホ投資",
+    jpFee:"手数料あり（コースによる）／NISA 0円", usFee:"—", fx:"—", usCount:"—", funds:"63本",
+    card:"セゾン・UCカード 基本0.1〜0.5%（プラチナ1.0%）", holdPt:"あり", points:"永久不滅ポイント・Ponta・dポイント",
+    odd:"可（ひな株）", ipo:"2025年 27社", app:"ひな株・ポイント投資がシンプル", support:"FAQ・動画解説",
+    s:{ fund:1, jp:2, us:0, undecided:1, eco:["saison","ponta","d"], micro:2, small:2, mid:1, large:0, odd:2, ipo:2, fee:1, app:2, phone:0, tool:0 } },
+];
+
+/* 質問。key=回答が加点に使うスコア項目 */
+const QUESTIONS = [
+  { q:"投資について、担当者に相談しながら進めたいですか？",
+    opts:[
+      { t:"自分で調べて進めたい。手数料は安いほうがいい", v:"net" },
+      { t:"担当者に相談しながら決めたい。手数料が高くても構わない", v:"full", note:"店舗のある総合証券（野村・大和・SMBC日興など）が向いています" },
+      { t:"わからない／初めてで不安", v:"unsure", note:"初めての方もネット証券から始めるのが一般的です。サポートが手厚い会社を優先します" },
+    ]},
+  { q:"主に何に投資したいですか？",
+    opts:[
+      { t:"投資信託の積立（NISAでコツコツ）", v:"fund" },
+      { t:"日本の個別株", v:"jp" },
+      { t:"米国株", v:"us" },
+      { t:"まだ決めていない", v:"undecided" },
+    ]},
+  { q:"普段よく使っているポイント・経済圏はどれですか？",
+    opts:[
+      { t:"楽天ポイント（楽天カード・楽天市場）", v:"rakuten" },
+      { t:"Vポイント（三井住友カード）", v:"v" },
+      { t:"dポイント（ドコモ・dカード）", v:"d" },
+      { t:"Pontaポイント／au", v:"ponta" },
+      { t:"PayPayポイント", v:"paypay" },
+      { t:"永久不滅ポイント（セゾン・UCカード）", v:"saison" },
+      { t:"特にない／こだわらない", v:"none" },
+    ]},
+  { q:"1回にどれくらいの金額で投資するイメージですか？",
+    opts:[
+      { t:"100円〜数千円で、まずは試したい", v:"micro" },
+      { t:"1万〜10万円くらい", v:"small" },
+      { t:"10万〜100万円くらい", v:"mid" },
+      { t:"100万円以上", v:"large" },
+    ]},
+  { q:"日本株を「1株から」少額で買いたいですか？",
+    opts:[
+      { t:"はい。1株ずつ買い集めたい", v:"odd" },
+      { t:"いいえ／わからない", v:"skip" },
+    ]},
+  { q:"IPO（新規上場株）の抽選に挑戦したいですか？",
+    opts:[
+      { t:"はい。積極的に申し込みたい", v:"ipo" },
+      { t:"いいえ／わからない", v:"skip" },
+    ]},
+  { q:"証券会社を選ぶとき、一番重視するのは？",
+    opts:[
+      { t:"手数料の安さ", v:"fee" },
+      { t:"アプリの使いやすさ", v:"app" },
+      { t:"電話で相談できる安心感", v:"phone" },
+      { t:"高機能な分析ツール", v:"tool" },
+    ]},
+];
+
+/* =========================================================
+   ロジック
+   ========================================================= */
+const answers = [];
+let idx = 0;
+
+const $ = s => document.querySelector(s);
+
+function renderQ(){
+  const q = QUESTIONS[idx];
+  $("#bar").style.width = (idx / QUESTIONS.length * 100) + "%";
+  $("#qnum").textContent = `Q${idx+1} / ${QUESTIONS.length}`;
+  $("#qtext").textContent = q.q;
+  const box = $("#opts"); box.innerHTML = "";
+  q.opts.forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.innerHTML = o.t + (o.note ? `<small>${o.note}</small>` : "");
+    b.onclick = () => { answers[idx] = o.v; idx++; idx < QUESTIONS.length ? renderQ() : showResult(); };
+    box.appendChild(b);
+  });
+  $("#back").disabled = idx === 0;
+}
+$("#back").onclick = () => { if(idx>0){ idx--; renderQ(); } };
+$("#retry").onclick = () => { answers.length = 0; idx = 0; $("#result").classList.add("hidden"); $("#quiz").classList.remove("hidden"); renderQ(); window.scrollTo(0,0); };
+
+function score(b){
+  const s = b.s, a = answers, why = [], caution = [];
+  let total = 0;
+
+  // Q1 サポート志向
+  if (a[0] === "unsure") { total += s.phone * 1.5; if (s.phone >= 3) why.push("電話・チャットのサポートが手厚い"); }
+  if (a[0] === "net")    { total += s.fee;         }
+
+  // Q2 投資対象
+  const target = a[1];
+  total += s[target] * 3;
+  if (s[target] >= 3) why.push({fund:"投資信託の本数・ポイント制度が充実", jp:"日本株の売買手数料が0円", us:"米国株の手数料・銘柄数に強い", undecided:"商品ラインナップが幅広く、後から何でも始められる"}[target]);
+  if (s[target] <= 1) caution.push({fund:"投資信託の本数は少なめ", jp:"日本株の手数料は他社よりやや高め", us:"米国株の取扱は限定的", undecided:"取扱商品が特定分野に偏っている"}[target]);
+
+  // Q3 経済圏
+  const eco = a[2];
+  if (eco !== "none" && s.eco.includes(eco)) { total += 4; why.push("普段使っているポイントがクレカ積立・投資で貯まる"); }
+  else if (eco !== "none" && s.eco.length === 0 && b.id !== "moomoo") { /* ポイント制度自体が独自 */ }
+
+  // Q4 投資額
+  const amt = a[3];
+  total += s[amt] * 2;
+  if (amt === "micro" && s.micro >= 3) why.push("100円〜1株など超少額から始められる");
+  if (amt === "large" && s.large <= 0) caution.push("まとまった金額の運用には物足りない可能性");
+
+  // Q5 単元未満株
+  if (a[4] === "odd") { total += s.odd * 2; if (s.odd >= 3) why.push("1株投資が手数料0円"); if (s.odd === 0) caution.push("単元未満株の購入ができない"); }
+
+  // Q6 IPO
+  if (a[5] === "ipo") { total += s.ipo * 2; if (s.ipo >= 3) why.push("IPOの取扱数が多い"); if (s.ipo === 0) caution.push("IPOの取扱がない"); }
+
+  // Q7 重視点
+  const pri = a[6];
+  total += s[pri] * 2;
+  if (s[pri] >= 3) why.push({fee:"手数料が業界最安水準", app:"アプリの操作性・見やすさに定評", phone:"電話で個別相談できる", tool:"分析ツールが高機能"}[pri]);
+
+  return { total, why: [...new Set(why)].slice(0,4), caution: caution.slice(0,2) };
+}
+
+function showResult(){
+  $("#quiz").classList.add("hidden");
+  $("#result").classList.remove("hidden");
+  $("#asof").textContent = AS_OF;
+
+  // 総合証券向けアドバイス
+  const adv = $("#advice");
+  if (answers[0] === "full") {
+    adv.innerHTML = `<div class="notice"><strong>担当者に相談しながら進めたい方へ</strong><br>その場合は店舗のある総合証券（野村證券・大和証券・SMBC日興証券など）が候補になります。ただし手数料はネット証券より高めです。<br>参考までに、ネット証券の中で相談体制が手厚い会社を下に表示します。</div>`;
+  } else if (answers[0] === "unsure") {
+    adv.innerHTML = `<div class="notice" style="border-color:var(--ok);background:#eef7f2"><strong>初めての方へ</strong><br>今のネット証券はチャット・電話・動画解説が充実しており、手数料の差が長期では大きく効きます。サポートが手厚い会社を優先して表示しています。</div>`;
+  } else adv.innerHTML = "";
+
+  const ranked = BROKERS.map(b => ({ b, ...score(b) })).sort((x,y) => y.total - x.total);
+  const max = ranked[0].total || 1;
+  const rk = $("#rank"); rk.innerHTML = "";
+  ranked.slice(0,3).forEach((r,i) => {
+    const d = document.createElement("div");
+    d.className = "rk" + (i===0 ? " top" : "");
+    d.innerHTML = `
+      <span class="medal">${["1位","2位","3位"][i]}</span>
+      <h3>${r.b.name}</h3>
+      <div class="fit">${r.b.tag}</div>
+      <div class="bar"><i style="width:${Math.round(r.total/max*100)}%"></i></div>
+      <ul class="why">${r.why.map(w=>`<li>${w}</li>`).join("") || "<li>バランスよく条件を満たしています</li>"}</ul>
+      ${r.caution.length ? `<div class="caution">注意: ${r.caution.join("／")}</div>` : ""}`;
+    rk.appendChild(d);
+  });
+
+  // 比較表
+  const rows = [
+    ["国内株手数料","jpFee"],["米国株手数料","usFee"],["為替手数料","fx"],["米国株銘柄数","usCount"],["投資信託本数","funds"],
+    ["クレカ積立","card"],["投信保有ポイント","holdPt"],["貯まるポイント","points"],["1株投資","odd"],["IPO実績","ipo"],["アプリ","app"],["サポート","support"]
+  ];
+  let html = `<table><thead><tr><th></th>${BROKERS.map(b=>`<th>${b.name}</th>`).join("")}</tr></thead><tbody>`;
+  rows.forEach(([label,key]) => { html += `<tr><th>${label}</th>${BROKERS.map(b=>`<td>${b[key]}</td>`).join("")}</tr>`; });
+  html += `</tbody></table>`;
+  $("#table").innerHTML = html;
+  window.scrollTo(0,0);
+}
+
+renderQ();
+</script>
+</body>
+</html>
